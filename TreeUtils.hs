@@ -24,6 +24,12 @@ parent (Loc ts cxt) = case cxt of
     R left parent -> Just (Loc (Node left ts) parent)
     Abs ix parent -> Just (Loc (Lambda ix ts) parent)
 
+sister :: TSLoc -> Maybe TSLoc
+sister (Loc ts cxt) = case cxt of
+    L right parent -> Just (Loc right (R ts cxt))
+    R left parent -> Just (Loc left (L ts cxt))
+    _ -> Nothing 
+
 downRight :: TSLoc -> Maybe TSLoc
 downRight (Loc (Leaf _) _) = Nothing
 downRight (Loc (Tr _) _) = Nothing
@@ -52,3 +58,6 @@ find loc test = case loc of
 
 replaceSubTree :: TSLoc -> TypeS -> TSLoc
 replaceSubTree (Loc ts1 cxt) ts2 = Loc ts2 cxt
+
+getSubTreeAt :: TSLoc -> TypeS
+getSubTreeAt (Loc ts1 cxt) = ts1
