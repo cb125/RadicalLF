@@ -44,7 +44,7 @@ applyLRule (Seq ts1 ts2) = zipWith3 fillPrf bs deltas rs
           deltas        = map (>>= (Just . getSubTreeAt)) deltaLocs
           sigmaLocs     = map parent fBtoAlocs
           rLocs         = zipWith (liftM2 replaceSubTree) sigmaLocs as 
-          rs            = map (>>= (Just . getSubTreeAt)) rLocs
+          rs            = map (>>= (Just . toTree)) rLocs
           fillPrf b d r = if isNothing b || isNothing d || isNothing r then Nothing 
             else Just (NoRule (Seq (fromJust d) (fromJust b)), NoRule (Seq (fromJust r) ts2))
             
@@ -54,22 +54,27 @@ applyAxiomRule (Seq ts1 ts2) = [Axiom (Seq ts1 ts2) | ts1 == ts2]
 
 applyRRule :: Sequent -> [ProofTree]
 applyRRule (Seq (Lambda n ts) t) = case t of 
-    Leaf (Func t1 t2) -> 
-        [RRule (Seq (Lambda n ts) t) (NoRule (Seq d (Leaf t2)))]
+    Leaf (Func t1 t2) -> case d of 
+          Nothing -> []
+          Just x -> [RRule (Seq (Lambda n ts) t) (NoRule (Seq x (Leaf t2)))]
         where isTrace loc = case loc of
-                (Loc (Tr n) _) -> True
+                (Loc (Tr n1) _) -> n1 == n
                 _              -> False
               trlocs = find (toZip ts) isTrace
               d = case map (`replaceSubTree` Leaf t1) trlocs of
-                [x] -> toTree x
+                [x] -> Just (toTree x)
+                _ -> Nothing
+                -- will fail if there are multiple traces with same index
     _ -> [] 
 applyRRule _ = []
 
 applyQRE :: Sequent -> [ProofTree]
-applyQRE (Seq ts1 ts2) = map f (iterateQR ts1 1)
-    where f (first, second) = QRE (Seq ts1 ts2) (NoRule (Seq (Node first (Lambda 1 second)) ts2))
+applyQRE (Seq ts1 ts2) = map f (iterateQR ts1 n)
+    where f (first, second) = QRE (Seq ts1 ts2) (NoRule (Seq (Node first (Lambda n second)) ts2))
+          n = nLambdas ts1 + 1
 
 
+-- takes a type structure, returns lists of pairs of moved elements and 
 iterateQR :: TypeS -> Int -> [(TypeS, TypeS)]
 iterateQR (Leaf x) n = [(Leaf x, Tr n)]
 iterateQR (Tr n1) n = [] -- do we want to allow QR of traces
@@ -99,10 +104,9 @@ findAllProofs (NoRule s) = iterateL lProofs ++ aProofs ++ rProofs ++ searchQR qr
             [] -> []
             (QRE s1 (NoRule (Seq t1 t2))):xs -> if nFuncTS t1 >= nLambdas t1 
                 then map (QRE s1) (findAllProofs (NoRule (Seq t1 t2))) ++ searchQR xs else []
-            -- _ -> []
+            _ -> []
 
 
--- testSearch = NoRule (Seq tree2 t) 
 
 
 nFuncTS :: TypeS -> Int
@@ -120,5 +124,3 @@ nLambdas (Node t1 t2) = nLambdas t1 + nLambdas t2
 nLambdas (Lambda n t) = 1 + nLambdas t
 nLambdas n = 0
 
-tree3 :: TypeS
-tree3 = Node et (Node et (Node ett et))

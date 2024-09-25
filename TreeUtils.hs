@@ -46,7 +46,8 @@ downLambda :: TSLoc -> Maybe TSLoc
 downLambda (Loc (Leaf _) _) = Nothing
 downLambda (Loc (Tr _) _) = Nothing
 downLambda (Loc (Node {}) _) = Nothing
-downLamdba (Loc (Lambda ix r) cxt) = Just (Loc r (Abs ix cxt))
+downLambda (Loc (Lambda ix r) cxt) = Just (Loc r (Abs ix cxt))
+-- downLambda _ = Nothing 
 
 -- find list of all places where condition is true
 find :: TSLoc -> (TSLoc -> Bool) -> [TSLoc]
@@ -61,3 +62,4 @@ replaceSubTree (Loc ts1 cxt) ts2 = Loc ts2 cxt
 
 getSubTreeAt :: TSLoc -> TypeS
 getSubTreeAt (Loc ts1 cxt) = ts1
+
