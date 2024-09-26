@@ -30,4 +30,4 @@ tree3 = Node et (Node et (Node ett et))
 
 test = findAllProofs (NoRule (Seq tree2 t))
 
-display = PrintProofs test
+display = PrintProof test
