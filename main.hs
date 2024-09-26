@@ -1,6 +1,7 @@
 import QRT 
 import QRTProofSearch
 import TreeUtils
+import PrintProof
 
 t, et, e :: TypeS
 t = Leaf T
